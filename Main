@@ -1,9 +1,11 @@
---// Basketball Legends UI Library //-- 
--- Customizable and simple UI system with Tabs, Toggles, Sliders, and Close Button.
+
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
 
 local UILibrary = {}
-local CoreGui = game:GetService("CoreGui")
-
 UILibrary.theme = {
     Background = Color3.fromRGB(25, 25, 25),
     Accent = Color3.fromRGB(255, 110, 48),
@@ -16,14 +18,16 @@ local function round(obj, radius)
     UICorner.Parent = obj
 end
 
-function UILibrary:CreateWindow(title, closeButton)
-    if CoreGui:FindFirstChild("BasketballLegendsUI") then
-        CoreGui.BasketballLegendsUI:Destroy()
+-- ===============================
+-- WINDOW CREATION
+-- ===============================
+function UILibrary:CreateWindow(title)
+    if CoreGui:FindFirstChild("CustomUILibrary") then
+        CoreGui.CustomUILibrary:Destroy()
     end
 
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "BasketballLegendsUI"
-    ScreenGui.Parent = CoreGui
+    local ScreenGui = Instance.new("ScreenGui", CoreGui)
+    ScreenGui.Name = "CustomUILibrary"
     ScreenGui.ResetOnSpawn = false
 
     local Frame = Instance.new("Frame")
@@ -36,33 +40,36 @@ function UILibrary:CreateWindow(title, closeButton)
     Frame.BorderSizePixel = 0
     round(Frame, 12)
 
+    local TitleBar = Instance.new("Frame")
+    TitleBar.Parent = Frame
+    TitleBar.Size = UDim2.new(1, 0, 0, 35)
+    TitleBar.BackgroundColor3 = self.theme.Accent
+    round(TitleBar, 12)
+
     local Title = Instance.new("TextLabel")
-    Title.Parent = Frame
-    Title.Size = UDim2.new(1, 0, 0, 35)
-    Title.BackgroundColor3 = self.theme.Accent
-    Title.Text = title or "Basketball Legends"
+    Title.Parent = TitleBar
+    Title.Size = UDim2.new(1, -40, 1, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = title or "UI Library"
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 18
-    Title.BorderSizePixel = 0
-    round(Title, 12)
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Position = UDim2.new(0, 10, 0, 0)
 
-    -- Close Button
-    if closeButton then
-        local CloseBtn = Instance.new("TextButton")
-        CloseBtn.Parent = Frame
-        CloseBtn.Size = UDim2.new(0, 35, 0, 25)
-        CloseBtn.Position = UDim2.new(1, -40, 0, 5)
-        CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        CloseBtn.Text = "X"
-        CloseBtn.TextColor3 = Color3.new(1,1,1)
-        CloseBtn.Font = Enum.Font.GothamBold
-        CloseBtn.TextSize = 16
-        round(CloseBtn, 6)
-        CloseBtn.MouseButton1Click:Connect(function()
-            ScreenGui:Destroy()
-        end)
-    end
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Parent = TitleBar
+    CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+    CloseBtn.Position = UDim2.new(1, -35, 0, 0)
+    CloseBtn.BackgroundTransparency = 1
+    CloseBtn.Text = "X"
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextSize = 18
+
+    CloseBtn.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+    end)
 
     local TabHolder = Instance.new("Frame")
     TabHolder.Parent = Frame
@@ -70,9 +77,9 @@ function UILibrary:CreateWindow(title, closeButton)
     TabHolder.Position = UDim2.new(0, 0, 0, 40)
     TabHolder.BackgroundTransparency = 1
 
-    local UIListLayout = Instance.new("UIListLayout")
-    UIListLayout.Parent = TabHolder
-    UIListLayout.Padding = UDim.new(0, 5)
+    local TabLayout = Instance.new("UIListLayout")
+    TabLayout.Parent = TabHolder
+    TabLayout.Padding = UDim.new(0, 5)
 
     local ContentHolder = Instance.new("Frame")
     ContentHolder.Parent = Frame
@@ -83,6 +90,9 @@ function UILibrary:CreateWindow(title, closeButton)
     return {Frame = Frame, Tabs = {}, TabHolder = TabHolder, ContentHolder = ContentHolder}
 end
 
+-- ===============================
+-- TABS
+-- ===============================
 function UILibrary:CreateTab(window, name)
     local TabButton = Instance.new("TextButton")
     TabButton.Parent = window.TabHolder
@@ -123,6 +133,29 @@ function UILibrary:CreateTab(window, name)
     return TabContent
 end
 
+-- ===============================
+-- BUTTON
+-- ===============================
+function UILibrary:Button(tab, text, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = tab
+    Btn.Size = UDim2.new(1, -10, 0, 40)
+    Btn.BackgroundColor3 = self.theme.Accent
+    Btn.TextColor3 = self.theme.Text
+    Btn.Text = text
+    Btn.Font = Enum.Font.Gotham
+    Btn.TextSize = 16
+    Btn.BorderSizePixel = 0
+    round(Btn, 8)
+
+    Btn.MouseButton1Click:Connect(function()
+        if callback then callback() end
+    end)
+end
+
+-- ===============================
+-- NORMAL TOGGLE
+-- ===============================
 function UILibrary:Toggle(tab, text, default, callback)
     local state = default or false
     local Btn = Instance.new("TextButton")
@@ -143,6 +176,39 @@ function UILibrary:Toggle(tab, text, default, callback)
     end)
 end
 
+-- ===============================
+-- LOOP TOGGLE
+-- ===============================
+function UILibrary:LoopToggle(tab, text, callback)
+    local state = false
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = tab
+    Btn.Size = UDim2.new(1, -10, 0, 40)
+    Btn.BackgroundColor3 = self.theme.Accent
+    Btn.TextColor3 = self.theme.Text
+    Btn.Text = text .. ": Off"
+    Btn.Font = Enum.Font.Gotham
+    Btn.TextSize = 16
+    Btn.BorderSizePixel = 0
+    round(Btn, 8)
+
+    Btn.MouseButton1Click:Connect(function()
+        state = not state
+        Btn.Text = text .. ": " .. (state and "On" or "Off")
+        if state then
+            task.spawn(function()
+                while state do
+                    if callback then callback() end
+                    task.wait()
+                end
+            end)
+        end
+    end)
+end
+
+-- ===============================
+-- SLIDER
+-- ===============================
 function UILibrary:Slider(tab, text, min, max, default, callback)
     local value = default or min
 
@@ -177,14 +243,15 @@ function UILibrary:Slider(tab, text, min, max, default, callback)
 
     local dragging = false
     SliderBtn.MouseButton1Down:Connect(function() dragging = true end)
-    game:GetService("UserInputService").InputEnded:Connect(function(input)
+    UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
     end)
-    game:GetService("RunService").RenderStepped:Connect(function()
+
+    RunService.RenderStepped:Connect(function()
         if dragging then
-            local mouse = game.Players.LocalPlayer:GetMouse()
+            local mouse = player:GetMouse()
             local pos = math.clamp((mouse.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
             value = math.floor(min + (max - min) * pos)
             SliderBtn.Position = UDim2.new(pos, -5, 0, 0)
