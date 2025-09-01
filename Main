@@ -1,0 +1,197 @@
+--// Basketball Legends UI Library //-- 
+-- Customizable and simple UI system with Tabs, Toggles, Sliders, and Close Button.
+
+local UILibrary = {}
+local CoreGui = game:GetService("CoreGui")
+
+UILibrary.theme = {
+    Background = Color3.fromRGB(25, 25, 25),
+    Accent = Color3.fromRGB(255, 110, 48),
+    Text = Color3.fromRGB(240, 240, 240)
+}
+
+local function round(obj, radius)
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, radius or 8)
+    UICorner.Parent = obj
+end
+
+function UILibrary:CreateWindow(title, closeButton)
+    if CoreGui:FindFirstChild("BasketballLegendsUI") then
+        CoreGui.BasketballLegendsUI:Destroy()
+    end
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "BasketballLegendsUI"
+    ScreenGui.Parent = CoreGui
+    ScreenGui.ResetOnSpawn = false
+
+    local Frame = Instance.new("Frame")
+    Frame.Parent = ScreenGui
+    Frame.BackgroundColor3 = self.theme.Background
+    Frame.Size = UDim2.new(0, 400, 0, 300)
+    Frame.Position = UDim2.new(0.5, -200, 0.5, -150)
+    Frame.Active = true
+    Frame.Draggable = true
+    Frame.BorderSizePixel = 0
+    round(Frame, 12)
+
+    local Title = Instance.new("TextLabel")
+    Title.Parent = Frame
+    Title.Size = UDim2.new(1, 0, 0, 35)
+    Title.BackgroundColor3 = self.theme.Accent
+    Title.Text = title or "Basketball Legends"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 18
+    Title.BorderSizePixel = 0
+    round(Title, 12)
+
+    -- Close Button
+    if closeButton then
+        local CloseBtn = Instance.new("TextButton")
+        CloseBtn.Parent = Frame
+        CloseBtn.Size = UDim2.new(0, 35, 0, 25)
+        CloseBtn.Position = UDim2.new(1, -40, 0, 5)
+        CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        CloseBtn.Text = "X"
+        CloseBtn.TextColor3 = Color3.new(1,1,1)
+        CloseBtn.Font = Enum.Font.GothamBold
+        CloseBtn.TextSize = 16
+        round(CloseBtn, 6)
+        CloseBtn.MouseButton1Click:Connect(function()
+            ScreenGui:Destroy()
+        end)
+    end
+
+    local TabHolder = Instance.new("Frame")
+    TabHolder.Parent = Frame
+    TabHolder.Size = UDim2.new(0, 100, 1, -40)
+    TabHolder.Position = UDim2.new(0, 0, 0, 40)
+    TabHolder.BackgroundTransparency = 1
+
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Parent = TabHolder
+    UIListLayout.Padding = UDim.new(0, 5)
+
+    local ContentHolder = Instance.new("Frame")
+    ContentHolder.Parent = Frame
+    ContentHolder.Size = UDim2.new(1, -110, 1, -40)
+    ContentHolder.Position = UDim2.new(0, 110, 0, 40)
+    ContentHolder.BackgroundTransparency = 1
+
+    return {Frame = Frame, Tabs = {}, TabHolder = TabHolder, ContentHolder = ContentHolder}
+end
+
+function UILibrary:CreateTab(window, name)
+    local TabButton = Instance.new("TextButton")
+    TabButton.Parent = window.TabHolder
+    TabButton.Size = UDim2.new(1, -10, 0, 30)
+    TabButton.BackgroundColor3 = self.theme.Accent
+    TabButton.TextColor3 = self.theme.Text
+    TabButton.Text = name
+    TabButton.Font = Enum.Font.Gotham
+    TabButton.TextSize = 14
+    TabButton.BorderSizePixel = 0
+    round(TabButton, 8)
+
+    local TabContent = Instance.new("ScrollingFrame")
+    TabContent.Parent = window.ContentHolder
+    TabContent.Size = UDim2.new(1, 0, 1, 0)
+    TabContent.Visible = false
+    TabContent.ScrollBarThickness = 4
+    TabContent.BackgroundTransparency = 1
+
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Parent = TabContent
+    UIListLayout.Padding = UDim.new(0, 8)
+
+    TabButton.MouseButton1Click:Connect(function()
+        for _, tab in ipairs(window.ContentHolder:GetChildren()) do
+            if tab:IsA("ScrollingFrame") then
+                tab.Visible = false
+            end
+        end
+        TabContent.Visible = true
+    end)
+
+    if #window.Tabs == 0 then
+        TabContent.Visible = true
+    end
+
+    table.insert(window.Tabs, {Button = TabButton, Content = TabContent})
+    return TabContent
+end
+
+function UILibrary:Toggle(tab, text, default, callback)
+    local state = default or false
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = tab
+    Btn.Size = UDim2.new(1, -10, 0, 40)
+    Btn.BackgroundColor3 = self.theme.Accent
+    Btn.TextColor3 = self.theme.Text
+    Btn.Text = text .. ": " .. (state and "On" or "Off")
+    Btn.Font = Enum.Font.Gotham
+    Btn.TextSize = 16
+    Btn.BorderSizePixel = 0
+    round(Btn, 8)
+
+    Btn.MouseButton1Click:Connect(function()
+        state = not state
+        Btn.Text = text .. ": " .. (state and "On" or "Off")
+        if callback then callback(state) end
+    end)
+end
+
+function UILibrary:Slider(tab, text, min, max, default, callback)
+    local value = default or min
+
+    local Frame = Instance.new("Frame")
+    Frame.Parent = tab
+    Frame.Size = UDim2.new(1, -10, 0, 50)
+    Frame.BackgroundColor3 = self.theme.Background
+    round(Frame, 8)
+
+    local Label = Instance.new("TextLabel")
+    Label.Parent = Frame
+    Label.Size = UDim2.new(1, 0, 0, 20)
+    Label.BackgroundTransparency = 1
+    Label.Text = text .. ": " .. value
+    Label.TextColor3 = self.theme.Text
+    Label.Font = Enum.Font.Gotham
+    Label.TextSize = 14
+
+    local SliderBack = Instance.new("Frame")
+    SliderBack.Parent = Frame
+    SliderBack.Size = UDim2.new(1, -10, 0, 10)
+    SliderBack.Position = UDim2.new(0, 5, 0, 30)
+    SliderBack.BackgroundColor3 = UILibrary.theme.Accent
+    round(SliderBack, 6)
+
+    local SliderBtn = Instance.new("TextButton")
+    SliderBtn.Parent = SliderBack
+    SliderBtn.Size = UDim2.new(0, 10, 1, 0)
+    SliderBtn.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    SliderBtn.Text = ""
+    round(SliderBtn, 6)
+
+    local dragging = false
+    SliderBtn.MouseButton1Down:Connect(function() dragging = true end)
+    game:GetService("UserInputService").InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if dragging then
+            local mouse = game.Players.LocalPlayer:GetMouse()
+            local pos = math.clamp((mouse.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+            value = math.floor(min + (max - min) * pos)
+            SliderBtn.Position = UDim2.new(pos, -5, 0, 0)
+            Label.Text = text .. ": " .. value
+            if callback then callback(value) end
+        end
+    end)
+end
+
+return UILibrary
